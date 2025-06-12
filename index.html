@@ -187,6 +187,7 @@
         max-width: 550px; /* Match container width for alignment */
         margin-top: 20px; /* Space above version info */
         padding: 0 20px; /* Horizontal padding to match container if needed, or adjust */
+        box-sizing: border-box; /* Ensure padding is included in width */
     }
 
     #language-selector-container {
@@ -315,31 +316,40 @@
             font-size: 0.9em; /* Match building row labels */
         }
 
-        /* Bottom controls on mobile */
+        /* Bottom controls on mobile - REVISED for alignment */
         #bottom-controls {
-            flex-direction: column; /* Stack language and theme selector vertically */
-            align-items: center; /* Center horizontally */
-            gap: 10px; /* Space between stacked elements */
+            flex-direction: row; /* Keep them in a row */
+            justify-content: space-between; /* Push to left and right */
+            align-items: center; /* Vertically align them */
+            gap: 10px; /* Space between them */
             margin-top: 15px;
-            padding: 0 10px; /* Reduce horizontal padding */
-            max-width: 95%; /* Adjust max-width for mobile */
+            padding: 0 15px; /* Adjust padding to match container's inner padding */
+            max-width: 95%; /* Limit overall width */
+            box-sizing: border-box; /* Ensure padding is included in width */
+            flex-wrap: nowrap; /* Prevent wrapping on mobile */
         }
         #language-selector-container {
-            justify-content: center; /* Center language selector on mobile */
-            width: 100%;
+            justify-content: flex-end; /* Push language selector to the right */
+            width: auto; /* Allow content to dictate width */
+            flex-shrink: 0; /* Prevent shrinking */
+            /* Ensure alignment with theme toggle */
+            display: flex; /* Explicitly set flex to ensure alignment */
+            align-items: center; /* Vertically align with button */
         }
         #theme-toggle {
-            width: fit-content; /* Adjust width */
-            align-self: center; /* Center button on mobile */
-            padding: 6px 10px; /* Smaller padding for mobile */
+            align-self: center; /* Ensure vertical alignment to center */
+            width: fit-content;
+            padding: 6px 10px;
             font-size: 0.85em;
+            flex-shrink: 0; /* Prevent shrinking */
         }
 
         .version-info {
             font-size: 0.65em; /* Slightly smaller for mobile */
             margin-top: 15px;
         }
-    </style>
+    }
+</style>
 </head>
 <body>
 
@@ -427,7 +437,7 @@
     </div>
 
     <div class="version-info">
-        Version 4.2.1 - Last Updated: June 12, 2025, 08:35 AM EDT
+        Version 4.2.1 - Last Updated: June 12, 2025, 10:02 AM EDT
     </div>
 
     <script>
@@ -489,7 +499,7 @@
                 resourceName: 'Quartzo',
                 buildingType: 'Oficina',
                 title: `Tempo até o {buildingName} Poder Ser Atualizado`,
-                headerLevel: 'Nível',
+                headerLevel: 'Nivel',
                 headerHeld: 'Tido',
                 resourceBuilding1: `{buildingType} de {resourceName} 1`,
                 resourceBuilding2: `{buildingType} de {resourceName} 2`,
@@ -1159,7 +1169,7 @@
             updateCalculations();
         };
 
-        // Version 4.2.1 - Last Updated: June 12, 2025, 08:35 AM EDT
+        // Version 4.2.1 - Last Updated: June 12, 2025, 10:02 AM EDT
     </script>
 
 </body>
