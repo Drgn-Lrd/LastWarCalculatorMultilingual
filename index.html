@@ -1,22 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Optoelectronic Lab Upgrade Calculator</title>
+<title data-i18n="title">Resistance Level Upgrade Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
+    /* Define CSS variables for consistent sizing */
+    :root {
+        --level-input-width: 45px; /* Enough for "Level" text + padding (max 2 digits) */
+        --held-input-width: 130px; /* Comfortably fits "99,999,999,999" plus padding (16 chars) */
+    }
+
     body {
         font-family: Arial, sans-serif;
         margin: 20px;
         background-color: #f4f4f4;
         display: flex;
-        justify-content: center; /* Center the container horizontally */
-        align-items: flex-start; /* Align to the top */
-        min-height: 90vh; /* Ensure body takes up most of the viewport height */
-        position: relative; /* Needed for absolute positioning of the language selector */
+        flex-direction: column; /* Stack children (language selector, container, version) vertically */
+        justify-content: flex-start; /* Align content from the top */
+        align-items: center; /* Center items horizontally */
+        min-height: 90vh;
     }
     .container {
-        max-width: 550px; /* Increased max-width for more room for wider elements */
-        width: 100%; /* Ensure it uses available width up to max-width */
-        margin: 20px; /* Added some margin around the container */
+        max-width: 550px;
+        width: 100%;
+        margin: 20px 0; /* Adjusted margin to allow space for language selector above */
         padding: 20px;
         border: 1px solid #ccc;
         border-radius: 8px;
@@ -26,71 +33,88 @@
     h2 {
         text-align: center;
         margin-top: 0;
-        margin-bottom: 20px; /* Adjusted margin for title */
-        line-height: 1.2; /* Allow title to wrap gracefully */
+        margin-bottom: 20px;
+        line-height: 1.2;
     }
     .row {
         display: flex;
         align-items: center;
-        margin-bottom: 8px; /* Reduced margin-bottom for tighter spacing */
+        margin-bottom: 8px;
+        flex-wrap: nowrap; /* Prevent wrapping on desktop by default */
     }
-    /* Changed display labels to span to avoid label errors */
-    .row .display-label { /* New class for labels for display spans */
-        flex: 2;
-        margin-right: 10px;
-        min-width: 120px;
+    /* Labels and display spans for general rows */
+    .row .display-label,
+    .row label {
+        flex: 1; /* Labels take available space, can grow/shrink but prefer content size */
+        margin-right: 15px; /* Controlled space between label and input */
+        min-width: unset; /* Remove previous min-width that was causing large gaps */
+        text-align: left; /* Align text to the left within its own space */
     }
-    .row label { /* Original label for form fields */
-        flex: 2;
-        margin-right: 10px;
-        min-width: 120px;
-    }
-    .row input[type="text"],
+    /* Inputs and select for general rows - NOW FIXED WIDTH on desktop */
+    .row input[type="tel"],
     .row select {
-        flex: 3; /* Give inputs more space */
+        flex: 0 0 var(--held-input-width); /* Fixed width for consistency */
         padding: 8px;
         border: 1px solid #ddd;
         border-radius: 4px;
-        box-sizing: border-box; /* Include padding and border in the element's total width */
-        text-align: right; /* Align numbers to the right */
+        box-sizing: border-box;
+        text-align: right; /* Keep numbers aligned to the right */
+        max-width: var(--held-input-width); /* Ensure it doesn't grow if flex: 1 was somehow applied */
     }
-    /* Specific styling for workshop input rows to create columns */
-    .workshop-row {
+    /* Specific override for timezoneSelect - allow it to be wider */
+    #timezoneSelect {
+        flex: 1; /* Allows timezone select to take available space */
+        max-width: unset; /* Override max-width to allow it to be wider than other inputs */
+        width: 100%; /* Fill available space as it is flex:1 */
+    }
+    /* Display values for general rows - NOW FIXED WIDTH on desktop */
+    .display-value {
+        font-weight: bold;
+        color: #333;
+        flex: 0 0 var(--held-input-width); /* Fixed width for consistency */
+        text-align: right; /* Ensure right justification */
+        padding: 8px; /* Match input padding for alignment */
+        min-width: unset; /* Remove previous min-width that was causing large gaps */
+        box-sizing: border-box;
+        max-width: var(--held-input-width); /* Apply same max-width for consistency */
+    }
+
+
+    /* Specific styling for building input rows to create columns */
+    .building-row {
         display: grid;
-        /* Adjusted grid columns: Name | Level (narrow) | Held (wider) */
-        grid-template-columns: 2.2fr 0.6fr 1.6fr; /* Total 4.4fr */
-        gap: 10px; /* Space between columns */
+        /* First column (labels) takes 'auto' space (content width), others use fixed widths */
+        grid-template-columns: auto var(--level-input-width) var(--held-input-width);
+        gap: 15px; /* Increased gap for better visual separation */
         align-items: center;
-        margin-bottom: 8px; /* Reduced margin-bottom for tighter spacing */
+        margin-bottom: 8px;
     }
-    .workshop-row label { /* Label for workshop names (e.g., Quartz Workshop 1) */
+    .building-row label { /* Label for building names (e.g., Quartz Building 1) */
         grid-column: 1;
         text-align: left;
-        margin-right: 0; /* Remove flex margin */
-        min-width: unset; /* Override general label min-width */
+        margin-right: 0;
+        min-width: unset;
     }
-    .workshop-row input {
-        text-align: right;
-        max-width: unset; /* Allow grid to manage width */
-    }
-    .workshop-row input[id^="level"] {
+    /* Building input fields - now strictly adhere to defined widths */
+    .building-row input[id^="level"] {
         grid-column: 2;
         width: 100%; /* Fill its grid cell */
+        max-width: var(--level-input-width); /* Ensure it doesn't exceed its defined width */
+        padding: 8px; /* Consistent padding */
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+        text-align: right;
     }
-    .workshop-row input[id^="quartz"] {
+    .building-row input[id^="resource"] {
         grid-column: 3;
         width: 100%; /* Fill its grid cell */
-    }
-
-    /* Specific width for the Time Zone Select dropdown */
-    #timezoneSelect {
-        max-width: 280px; /* Increased width to prevent text cutoff */
-    }
-
-    /* Specific width for Quartz Held and Quartz Needed inputs */
-    #quartzHeldText,
-    #quartzNeededText {
-        max-width: 200px; /* Consistent width for both */
+        max-width: var(--held-input-width); /* Ensure it doesn't exceed its defined width */
+        padding: 8px; /* Consistent padding */
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+        text-align: right;
     }
 
     button {
@@ -111,47 +135,38 @@
         font-weight: bold;
         margin-bottom: 5px;
         display: grid;
-        /* Match workshop-row columns */
-        grid-template-columns: 2.2fr 0.6fr 1.6fr;
-        gap: 10px;
+        /* Match building-row columns exactly */
+        grid-template-columns: auto var(--level-input-width) var(--held-input-width);
+        gap: 15px; /* Match building-row gap */
     }
     .header-row span:first-child { /* The empty span for layout */
         text-align: left;
         grid-column: 1;
     }
     .header-row strong { /* Changed labels to strong for header semantic */
-        grid-column: auto; /* Let grid handle positioning */
+        grid-column: auto;
         text-align: center;
-    }
-    .display-value {
-        font-weight: bold;
-        color: #333;
-        flex: 2; /* Give display values space */
-        text-align: right; /* Align to the right */
-        padding: 8px; /* Match input padding for alignment */
-        min-width: 150px; /* Ensure it doesn't wrap too much */
-        box-sizing: border-box;
     }
     hr {
         border: 0;
         height: 1px;
         background: #eee;
-        margin: 15px 0; /* Reduced margin for the horizontal rule */
+        margin: 15px 0;
     }
 
-    /* --- Language Selector Container Styling (New CSS) --- */
+    /* --- Language Selector Container Styling --- */
     #language-selector-container {
-        position: absolute;
-        top: 20px; /* Distance from top */
-        right: 20px; /* Distance from right */
-        z-index: 1000; /* Ensure it's on top */
-        display: flex; /* To align label and select horizontally */
+        display: flex;
         align-items: center;
         gap: 5px;
+        margin-top: 10px;
+        margin-left: auto;
+        margin-right: 20px;
+        padding: 5px 0;
     }
     #language-selector-container label {
-        margin: 0; /* Remove default label margin */
-        flex: none; /* Don't let it grow/shrink */
+        margin: 0;
+        flex: none;
     }
     #languageSelect {
         padding: 5px 8px;
@@ -159,7 +174,127 @@
         border-radius: 4px;
         background-color: #fff;
         cursor: pointer;
-        min-width: 100px; /* Give it some minimum width */
+        min-width: 100px;
+    }
+
+    /* --- Version Info Styling --- */
+    .version-info {
+        margin-top: 20px;
+        font-size: 0.8em;
+        color: #777;
+        text-align: center;
+    }
+
+    /* --- Media Queries for Mobile Responsiveness (max-width: 480px) --- */
+    @media (max-width: 480px) {
+        body {
+            font-size: 15px; /* Reduced base font size for better mobile fit */
+        }
+
+        /* Language Selector Stacking */
+        #language-selector-container {
+            flex-direction: column; /* Stack label and dropdown vertically */
+            align-items: flex-end; /* Keep aligned right if stacked */
+            gap: 2px;
+            margin-top: 10px;
+            margin-right: 10px;
+            padding: 0;
+        }
+        #language-selector-container label {
+            font-size: 0.9em; /* Slightly larger for readability */
+        }
+        #languageSelect {
+            padding: 5px 8px;
+            font-size: 1em; /* Adjusted relative to new body font-size */
+            min-width: unset; /* Allow it to shrink if needed */
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 95%;
+            margin: 10px auto;
+            padding: 15px;
+        }
+
+        h2 {
+            font-size: 1.3em; /* Slightly smaller for mobile */
+            margin-bottom: 15px;
+        }
+
+        /* General rows on mobile (e.g., Resource Held) */
+        .row {
+            flex-wrap: nowrap; /* IMPORTANT: Prevent wrapping labels/inputs onto new line */
+            justify-content: space-between; /* Space out label and input */
+        }
+        .row .display-label,
+        .row label {
+            flex: 0 1 auto; /* Allow label to shrink if needed (flex-shrink: 1), but prefer content size */
+            min-width: 0; /* Allow content to shrink below its intrinsic width */
+            margin-right: 10px; /* Keep a small gap */
+            font-size: 1em; /* Adjust relative to new body font-size */
+        }
+        /* Inputs and display values for general rows on mobile */
+        .row input[type="tel"],
+        .display-value {
+            flex: 1 1 auto; /* Allow input to fill remaining space, can shrink (flex-shrink: 1) */
+            min-width: 0; /* Allow input to shrink below its intrinsic width */
+            text-align: right !important; /* Force right justification on mobile */
+            font-size: 1em; /* Adjust relative to new body font-size */
+            max-width: 120px; /* Adjusted from 85px to better fit large numbers */
+        }
+        /* Specific overrides for timezoneSelect on mobile */
+        #timezoneSelect {
+            flex: 1; /* Takes available space */
+            max-width: 100%; /* Ensure it doesn't overflow */
+            width: 100%;
+        }
+
+
+        /* Building rows on mobile */
+        .building-row {
+            display: grid; /* Keep grid */
+            /* Precise mobile column widths for strict alignment and consistent sizing */
+            grid-template-columns: minmax(80px, 1fr) 40px 120px; /* Adjusted last column from 85px to 120px */
+            gap: 8px; /* Slightly reduced gap on mobile */
+            align-items: center; /* Ensure vertical alignment */
+        }
+        /* Make inputs fill their grid columns on mobile and remove desktop max-width */
+        .building-row input[id^="level"] {
+            width: 100%;
+            max-width: unset; /* Remove desktop fixed width constraints */
+            font-size: 0.9em;
+            padding: 5px; /* Smaller padding for mobile */
+            text-align: right !important; /* Force right justification on mobile */
+        }
+        .building-row input[id^="resource"] {
+            width: 100%;
+            max-width: unset; /* Remove desktop fixed width constraints */
+            font-size: 0.9em;
+            padding: 5px; /* Smaller padding for mobile */
+            text-align: right !important; /* Force right justification on mobile */
+        }
+        .building-row label {
+            font-size: 0.9em;
+            padding: 0; /* Remove padding if not needed */
+        }
+
+        .header-row {
+            /* Match building-row on mobile for perfect alignment */
+            grid-template-columns: minmax(80px, 1fr) 40px 120px; /* Adjusted last column from 85px to 120px */
+            gap: 8px;
+            font-size: 0.9em; /* Match building row labels */
+        }
+
+        button {
+            padding: 10px;
+            font-size: 1em;
+            margin-top: 15px;
+        }
+
+        .version-info {
+            font-size: 0.65em; /* Slightly smaller for mobile */
+            margin-top: 15px;
+        }
     }
 </style>
 </head>
@@ -167,7 +302,8 @@
 
 <div id="language-selector-container">
     <label for="languageSelect">Language:</label>
-    <select id="languageSelect" tabindex="1"> </select>
+    <select id="languageSelect" tabindex="1">
+        </select>
 </div>
 
 <div class="container">
@@ -179,52 +315,52 @@
         <strong id="header-held" data-i18n="headerHeld">Held</strong>
     </div>
 
-    <div class="workshop-row">
-        <label id="workshop1-name" data-i18n="quartzWorkshop1">Quartz Workshop 1</label>
-        <input type="text" id="level1" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="2" aria-labelledby="workshop1-name header-level" maxlength="2">
-        <input type="text" id="quartz1" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="3" aria-labelledby="workshop1-name header-held">
+    <div class="building-row">
+        <label id="building1-name" data-i18n="resourceBuilding1">Quartz Workshop 1</label>
+        <input type="tel" id="level1" value="" onblur="updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="2" aria-labelledby="building1-name header-level" maxlength="2">
+        <input type="tel" id="resource1" value="" onblur="expandDecimal(this); updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="7" aria-labelledby="building1-name header-held">
     </div>
-    <div class="workshop-row">
-        <label id="workshop2-name" data-i18n="quartzWorkshop2">Quartz Workshop 2</label>
-        <input type="text" id="level2" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="4" aria-labelledby="workshop2-name header-level" maxlength="2">
-        <input type="text" id="quartz2" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="5" aria-labelledby="workshop2-name header-held">
+    <div class="building-row">
+        <label id="building2-name" data-i18n="resourceBuilding2">Quartz Workshop 2</label>
+        <input type="tel" id="level2" value="" onblur="updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="3" aria-labelledby="building2-name header-level" maxlength="2">
+        <input type="tel" id="resource2" value="" onblur="expandDecimal(this); updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="8" aria-labelledby="building2-name header-held">
     </div>
-    <div class="workshop-row">
-        <label id="workshop3-name" data-i18n="quartzWorkshop3">Quartz Workshop 3</label>
-        <input type="text" id="level3" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="6" aria-labelledby="workshop3-name header-level" maxlength="2">
-        <input type="text" id="quartz3" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="7" aria-labelledby="workshop3-name header-held">
+    <div class="building-row">
+        <label id="building3-name" data-i18n="resourceBuilding3">Quartz Workshop 3</label>
+        <input type="tel" id="level3" value="" onblur="updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="4" aria-labelledby="building3-name header-level" maxlength="2">
+        <input type="tel" id="resource3" value="" onblur="expandDecimal(this); updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="9" aria-labelledby="building3-name header-held">
     </div>
-    <div class="workshop-row">
-        <label id="workshop4-name" data-i18n="quartzWorkshop4">Quartz Workshop 4</label>
-        <input type="text" id="level4" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="8" aria-labelledby="workshop4-name header-level" maxlength="2">
-        <input type="text" id="quartz4" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="9" aria-labelledby="workshop4-name header-held">
+    <div class="building-row">
+        <label id="building4-name" data-i18n="resourceBuilding4">Quartz Workshop 4</label>
+        <input type="tel" id="level4" value="" onblur="updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="5" aria-labelledby="building4-name header-level" maxlength="2">
+        <input type="tel" id="resource4" value="" onblur="expandDecimal(this); updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="10" aria-labelledby="building4-name header-held">
     </div>
-    <div class="workshop-row">
-        <label id="weekly-name" data-i18n="weeklyWorkshop">Weekly Workshop</label>
-        <input type="text" id="levelWeekly" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="10" aria-labelledby="weekly-name header-level" maxlength="2">
-        <input type="text" id="quartzWeekly" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="11" aria-labelledby="weekly-name header-held">
+    <div class="building-row">
+        <label id="weeklyBuilding-name" data-i18n="weeklyBuilding">Weekly Workshop</label>
+        <input type="tel" id="levelWeekly" value="" onblur="updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="6" aria-labelledby="weeklyBuilding-name header-level" maxlength="2">
+        <input type="tel" id="resourceWeekly" value="" onblur="expandDecimal(this); updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="11" aria-labelledby="weeklyBuilding-name header-held">
     </div>
 
     <hr>
 
     <div class="row">
-        <span class="display-label" data-i18n="quartzPerHour">Quartz/hr:</span>
-        <span id="quartzHrDisplay" class="display-value">0</span>
+        <span class="display-label" data-i18n="resourcePerHour">Quartz/hr:</span>
+        <span id="resourceHrDisplay" class="display-value">0</span>
     </div>
 
     <div class="row">
-        <label for="quartzHeldText" data-i18n="quartzHeld">Quartz Held:</label>
-        <input type="text" id="quartzHeldText" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="12">
+        <label for="resourceHeldText" data-i18n="resourceHeld">Quartz Held:</label>
+        <input type="tel" id="resourceHeldText" value="" onblur="expandDecimal(this); updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="12">
     </div>
 
     <div class="row">
-        <span class="display-label" data-i18n="totalQuartz">Total Quartz:</span>
-        <span id="totalQuartzDisplay" class="display-value">0</span>
+        <span class="display-label" data-i18n="totalResource">Total Quartz:</span>
+        <span id="totalResourceDisplay" class="display-value">0</span>
     </div>
 
     <div class="row">
-        <label for="quartzNeededText" data-i18n="quartzNeeded">Quartz Needed:</label>
-        <input type="text" id="quartzNeededText" value="" onblur="updateCalculations(); formatInput(this)" onfocus="this.select()" tabindex="13">
+        <label for="resourceNeededText" data-i18n="resourceNeeded">Quartz Needed:</label>
+        <input type="tel" id="resourceNeededText" value="" onblur="expandDecimal(this); updateCalculations(this); formatInput(this)" onfocus="this.select()" tabindex="13">
     </div>
 
     <div class="row">
@@ -246,94 +382,105 @@
     <button onclick="updateCalculations()" tabindex="15" data-i18n="calculateButton">Calculate</button>
 </div>
 
+<div class="version-info">
+    Version 4.1.0 - Last Updated: June 12, 2025, 04:08 AM EDT
+</div>
+
 <script>
+    // ######################### Configuration Variables #########################
+    // Easily change these values to adapt the calculator for different buildings or resources
+    const BUILDING_NAME = 'Optoelectronic Lab';
+    const RESOURCE_NAME = 'Quartz';
+    const BUILDING_TYPE = 'Workshop'; // New variable for the type of building (e.g., Workshop, Factory, Field)
+    // ###########################################################################
+
     // Define your translations
     const translations = {
         'en': { // English (default fallback)
-            title: 'Time Until Optoelectronic Lab Can Be Upgraded',
+            title: `Time Until ${BUILDING_NAME} Can Be Upgraded`,
             headerLevel: 'Level',
             headerHeld: 'Held',
-            quartzWorkshop1: 'Quartz Workshop 1',
-            quartzWorkshop2: 'Quartz Workshop 2',
-            quartzWorkshop3: 'Quartz Workshop 3',
-            quartzWorkshop4: 'Quartz Workshop 4',
-            weeklyWorkshop: 'Weekly Workshop',
-            quartzPerHour: 'Quartz/hr:',
-            quartzHeld: 'Quartz Held:',
-            totalQuartz: 'Total Quartz:',
-            quartzNeeded: 'Quartz Needed:',
+            resourceBuilding1: `${RESOURCE_NAME} ${BUILDING_TYPE} 1`,
+            resourceBuilding2: `${RESOURCE_NAME} ${BUILDING_TYPE} 2`,
+            resourceBuilding3: `${RESOURCE_NAME} ${BUILDING_TYPE} 3`,
+            resourceBuilding4: `${RESOURCE_NAME} ${BUILDING_TYPE} 4`,
+            weeklyBuilding: `Weekly ${BUILDING_TYPE}`,
+            resourcePerHour: `${RESOURCE_NAME}/hr:`,
+            resourceHeld: `${RESOURCE_NAME} Held:`,
+            totalResource: `Total ${RESOURCE_NAME}:`,
+            resourceNeeded: `${RESOURCE_NAME} Needed:`,
             timeToComplete: 'Time to Complete:',
             completionTime: 'Completion Time:',
             displayTimeZone: 'Display Time Zone:',
             calculateButton: 'Calculate'
         },
         'es': { // Spanish
-            title: 'Tiempo hasta que el Laboratorio Optoelectrónico pueda ser mejorado',
+            title: `Tiempo hasta que el ${BUILDING_NAME} pueda ser mejorado`,
             headerLevel: 'Nivel',
             headerHeld: 'Obtenido',
-            quartzWorkshop1: 'Taller de Cuarzo 1',
-            quartzWorkshop2: 'Taller de Cuarzo 2',
-            quartzWorkshop3: 'Taller de Cuarzo 3',
-            quartzWorkshop4: 'Taller de Cuarzo 4',
-            weeklyWorkshop: 'Taller Semanal',
-            quartzPerHour: 'Cuarzo/hora:',
-            quartzHeld: 'Cuarzo Actual:',
-            totalQuartz: 'Cuarzo Total:',
-            quartzNeeded: 'Cuarzo Necesario:',
+            resourceBuilding1: `${RESOURCE_NAME} ${BUILDING_TYPE} 1`,
+            resourceBuilding2: `${RESOURCE_NAME} ${BUILDING_TYPE} 2`,
+            resourceBuilding3: `${RESOURCE_NAME} ${BUILDING_TYPE} 3`,
+            resourceBuilding4: `${RESOURCE_NAME} ${BUILDING_TYPE} 4`,
+            weeklyBuilding: `Semanal ${BUILDING_TYPE}`, // Changed to use variable
+            resourcePerHour: `${RESOURCE_NAME}/hora:`,
+            resourceHeld: `${RESOURCE_NAME} Actual:`,
+            totalResource: `${RESOURCE_NAME} Total:`,
+            resourceNeeded: `${RESOURCE_NAME} Necesario:`,
             timeToComplete: 'Tiempo Restante:',
             completionTime: 'Hora de Finalización:',
             displayTimeZone: 'Zona Horaria:',
             calculateButton: 'Calcular'
         },
-        'pt': { // Portuguese (Placeholder translations)
-            title: 'Tempo até o Laboratório Optoeletrônico Poder Ser Atualizado',
+        'pt': { // Portuguese
+            title: `Tempo até o ${BUILDING_NAME} Poder Ser Atualizado`,
             headerLevel: 'Nível',
             headerHeld: 'Tido',
-            quartzWorkshop1: 'Oficina de Quartzo 1',
-            quartzWorkshop2: 'Oficina de Quartzo 2',
-            quartzWorkshop3: 'Oficina de Quartzo 3',
-            quartzWorkshop4: 'Oficina de Quartzo 4',
-            weeklyWorkshop: 'Oficina Semanal',
-            quartzPerHour: 'Quartzo/hr:',
-            quartzHeld: 'Quartzo Atual:',
-            totalQuartz: 'Quartzo Total:',
-            quartzNeeded: 'Quartzo Necessário:',
+            resourceBuilding1: `Oficina de ${RESOURCE_NAME} 1`, // Needs to be updated
+            resourceBuilding2: `Oficina de ${RESOURCE_NAME} 2`, // Needs to be updated
+            resourceBuilding3: `Oficina de ${RESOURCE_NAME} 3`, // Needs to be updated
+            resourceBuilding4: `Oficina de ${RESOURCE_NAME} 4`, // Needs to be updated
+            weeklyBuilding: `Oficina Semanal`, // Needs to be updated
+            resourcePerHour: `${RESOURCE_NAME}/hr:`,
+            resourceHeld: `${RESOURCE_NAME} Atual:`,
+            totalResource: `${RESOURCE_NAME} Total:`,
+            resourceNeeded: `${RESOURCE_NAME} Necessário:`,
             timeToComplete: 'Tempo para Concluir:',
             completionTime: 'Hora de Conclusão:',
             displayTimeZone: 'Fuso Horário:',
             calculateButton: 'Calcular'
         },
-        'ko': { // Korean (Placeholder translations)
-            title: '광전자 연구실 업그레이드까지 남은 시간',
+        'ko': { // Korean
+            title: `${BUILDING_NAME} 업그레이드까지 남은 시간`,
             headerLevel: '레벨',
             headerHeld: '보유',
-            quartzWorkshop1: '석영 작업장 1',
-            quartzWorkshop2: '석영 작업장 2',
-            quartzWorkshop3: '석영 작업장 3',
-            quartzWorkshop4: '석영 작업장 4',
-            weeklyWorkshop: '주간 작업장',
-            quartzPerHour: '시간당 석영:',
-            quartzHeld: '보유 석영:',
-            totalQuartz: '총 석영:',
-            quartzNeeded: '필요한 석영:',
+            resourceBuilding1: `${RESOURCE_NAME} 작업장 1`, // Needs to be updated
+            resourceBuilding2: `${RESOURCE_NAME} 작업장 2`, // Needs to be updated
+            resourceBuilding3: `${RESOURCE_NAME} 작업장 3`, // Needs to be updated
+            resourceBuilding4: `${RESOURCE_NAME} 작업장 4`, // Needs to be updated
+            weeklyBuilding: '주간 작업장', // Needs to be updated
+            resourcePerHour: `시간당 ${RESOURCE_NAME}:`,
+            resourceHeld: `보유 ${RESOURCE_NAME}:`,
+            totalResource: `총 ${RESOURCE_NAME}:`,
+            resourceNeeded: `필요한 ${RESOURCE_NAME}:`,
             timeToComplete: '완료까지 남은 시간:',
             completionTime: '완료 시간:',
             displayTimeZone: '표시 시간대:',
             calculateButton: '계산'
         },
-        'ja': { // Japanese (Placeholder translations)
-            title: '光電子ラボアップグレードまでの時間',
+        'ja': { // Japanese
+            title: `${BUILDING_NAME} アップグレードまでの時間`,
             headerLevel: 'レベル',
             headerHeld: '所持',
-            quartzWorkshop1: 'クォーツワークショップ 1',
-            quartzWorkshop2: 'クォーツワークショップ 2',
-            quartzWorkshop3: 'クォーツワークショップ 3',
-            quartzWorkshop4: 'クォーツワークショップ 4',
-            weeklyWorkshop: '週次ワークショップ',
-            quartzPerHour: 'クォーツ/時:',
-            quartzHeld: '所持クォーツ:',
-            totalQuartz: '合計クォーツ:',
-            quartzNeeded: '必要なクォーツ:',
+            resourceBuilding1: `${RESOURCE_NAME}ワークショップ 1`, // Needs to be updated
+            resourceBuilding2: `${RESOURCE_NAME}ワークショップ 2`, // Needs to be updated
+            resourceBuilding3: `${RESOURCE_NAME}ワークショップ 3`, // Needs to be updated
+            resourceBuilding4: `${RESOURCE_NAME}ワークショップ 4`, // Needs to be updated
+            weeklyBuilding: '週次ワークショップ', // Needs to be updated
+            resourcePerHour: `${RESOURCE_NAME}/時:`,
+            resourceHeld: `所持${RESOURCE_NAME}:`,
+            totalResource: `合計${RESOURCE_NAME}:`,
+            resourceNeeded: `必要な${RESOURCE_NAME}:`,
             timeToComplete: '完了までの時間:',
             completionTime: '完了時刻:',
             displayTimeZone: '表示タイムゾーン:',
@@ -348,36 +495,95 @@
         if (langOverride) {
             langToUse = langOverride;
         } else if (document.getElementById('languageSelect') && document.getElementById('languageSelect').value) {
-            // If the language select exists and has a value, use it (e.g., on initial load after populating)
             langToUse = document.getElementById('languageSelect').value;
         } else {
-            // Fallback to browser language or default 'en'
             langToUse = navigator.language.split('-')[0];
         }
 
-        const currentTranslations = translations[langToUse] || translations['en']; // Fallback to English
+        const currentTranslations = translations[langToUse] || translations['en'];
 
-        // Update the language select dropdown to reflect the current language
+        // Dynamically update the translation strings for all languages based on constants
+        // This is necessary because the base translation definitions are fixed,
+        // but the constants (BUILDING_NAME, RESOURCE_NAME, BUILDING_TYPE) can change.
+        currentTranslations.title = `Time Until ${BUILDING_NAME} Can Be Upgraded`;
+        currentTranslations.resourceBuilding1 = `${RESOURCE_NAME} ${BUILDING_TYPE} 1`;
+        currentTranslations.resourceBuilding2 = `${RESOURCE_NAME} ${BUILDING_TYPE} 2`;
+        currentTranslations.resourceBuilding3 = `${RESOURCE_NAME} ${BUILDING_TYPE} 3`;
+        currentTranslations.resourceBuilding4 = `${RESOURCE_NAME} ${BUILDING_TYPE} 4`;
+        currentTranslations.weeklyBuilding = `Weekly ${BUILDING_TYPE}`; // Ensure this is dynamic for all languages.
+        currentTranslations.resourcePerHour = `${RESOURCE_NAME}/hr:`;
+        currentTranslations.resourceHeld = `${RESOURCE_NAME} Held:`;
+        currentTranslations.totalResource = `Total ${RESOURCE_NAME}:`;
+        currentTranslations.resourceNeeded = `${RESOURCE_NAME} Needed:`;
+
+
+        // Adjusting specific language translations to use BUILDING_TYPE where relevant:
+        if (langToUse === 'es') {
+            currentTranslations.resourceBuilding1 = `${RESOURCE_NAME} ${BUILDING_TYPE} 1`;
+            currentTranslations.resourceBuilding2 = `${RESOURCE_NAME} ${BUILDING_TYPE} 2`;
+            currentTranslations.resourceBuilding3 = `${RESOURCE_NAME} ${BUILDING_TYPE} 3`;
+            currentTranslations.resourceBuilding4 = `${RESOURCE_NAME} ${BUILDING_TYPE} 4`;
+            currentTranslations.weeklyBuilding = `Semanal ${BUILDING_TYPE}`;
+            currentTranslations.resourcePerHour = `${RESOURCE_NAME}/hora:`;
+            currentTranslations.resourceHeld = `${RESOURCE_NAME} Actual:`;
+            currentTranslations.totalResource = `${RESOURCE_NAME} Total:`;
+            currentTranslations.resourceNeeded = `${RESOURCE_NAME} Necesario:`;
+        } else if (langToUse === 'pt') {
+            currentTranslations.resourceBuilding1 = `${BUILDING_TYPE} de ${RESOURCE_NAME} 1`; // Example of different order
+            currentTranslations.resourceBuilding2 = `${BUILDING_TYPE} de ${RESOURCE_NAME} 2`;
+            currentTranslations.resourceBuilding3 = `${BUILDING_TYPE} de ${RESOURCE_NAME} 3`;
+            currentTranslations.resourceBuilding4 = `${BUILDING_TYPE} de ${RESOURCE_NAME} 4`;
+            currentTranslations.weeklyBuilding = `${BUILDING_TYPE} Semanal`;
+            currentTranslations.resourcePerHour = `${RESOURCE_NAME}/hr:`;
+            currentTranslations.resourceHeld = `${RESOURCE_NAME} Atual:`;
+            currentTranslations.totalResource = `${RESOURCE_NAME} Total:`;
+            currentTranslations.resourceNeeded = `${RESOURCE_NAME} Necessário:`;
+        } else if (langToUse === 'ko') {
+            currentTranslations.resourceBuilding1 = `${RESOURCE_NAME} ${BUILDING_TYPE} 1`;
+            currentTranslations.resourceBuilding2 = `${RESOURCE_NAME} ${BUILDING_TYPE} 2`;
+            currentTranslations.resourceBuilding3 = `${RESOURCE_NAME} ${BUILDING_TYPE} 3`;
+            currentTranslations.resourceBuilding4 = `${RESOURCE_NAME} ${BUILDING_TYPE} 4`;
+            currentTranslations.weeklyBuilding = `주간 ${BUILDING_TYPE}`;
+            currentTranslations.resourcePerHour = `시간당 ${RESOURCE_NAME}:`;
+            currentTranslations.resourceHeld = `보유 ${RESOURCE_NAME}:`;
+            currentTranslations.totalResource = `총 ${RESOURCE_NAME}:`;
+            currentTranslations.resourceNeeded = `필요한 ${RESOURCE_NAME}:`;
+        } else if (langToUse === 'ja') {
+            currentTranslations.resourceBuilding1 = `${RESOURCE_NAME}${BUILDING_TYPE} 1`; // No space for Japanese
+            currentTranslations.resourceBuilding2 = `${RESOURCE_NAME}${BUILDING_TYPE} 2`;
+            currentTranslations.resourceBuilding3 = `${RESOURCE_NAME}${BUILDING_TYPE} 3`;
+            currentTranslations.resourceBuilding4 = `${RESOURCE_NAME}${BUILDING_TYPE} 4`;
+            currentTranslations.weeklyBuilding = `週次${BUILDING_TYPE}`;
+            currentTranslations.resourcePerHour = `${RESOURCE_NAME}/時:`;
+            currentTranslations.resourceHeld = `所持${RESOURCE_NAME}:`;
+            currentTranslations.totalResource = `合計${RESOURCE_NAME}:`;
+            currentTranslations.resourceNeeded = `必要な${RESOURCE_NAME}:`;
+        }
+
+
         const languageSelect = document.getElementById('languageSelect');
         if (languageSelect && languageSelect.value !== langToUse) {
             languageSelect.value = langToUse;
         }
 
-        // Apply translations to elements with data-i18n attribute
         document.querySelectorAll('[data-i18n]').forEach(element => {
             const key = element.getAttribute('data-i18n');
             if (currentTranslations[key]) {
-                element.textContent = currentTranslations[key];
+                // If the element is the title tag, update document.title
+                if (element.tagName.toLowerCase() === 'title') {
+                    document.title = currentTranslations[key];
+                } else {
+                    element.textContent = currentTranslations[key];
+                }
             }
         });
 
-        // Specific handling for the main title (h2)
-        const titleElement = document.querySelector('h2');
-        if (titleElement && currentTranslations.title) {
-            titleElement.textContent = currentTranslations.title;
+        // Ensure the h2 element is updated (it also has data-i18n="title")
+        const h2Element = document.querySelector('h2[data-i18n="title"]');
+        if (h2Element && currentTranslations.title) {
+            h2Element.textContent = currentTranslations.title;
         }
 
-        // Specific handling for the Calculate button
         const buttonElement = document.querySelector('button');
         if (buttonElement && currentTranslations.calculateButton) {
             buttonElement.textContent = currentTranslations.calculateButton;
@@ -387,45 +593,63 @@
     // Function to populate the language selection dropdown
     function populateLanguageSelector() {
         const languageSelect = document.getElementById('languageSelect');
-        languageSelect.innerHTML = ''; // Clear existing options
+        languageSelect.innerHTML = '';
 
-        // Define user-friendly names for the language codes
         const languageNames = {
             'en': 'English',
             'es': 'Español',
             'pt': 'Português',
-            'ko': '한국어', // Korean
-            'ja': '日本語'  // Japanese
+            'ko': '한국어',
+            'ja': '日本語'
         };
 
         for (const langCode in translations) {
             if (translations.hasOwnProperty(langCode)) {
                 const option = document.createElement('option');
                 option.value = langCode;
-                option.textContent = languageNames[langCode] || langCode; // Display friendly name or code
+                option.textContent = languageNames[langCode] || langCode;
                 languageSelect.appendChild(option);
             }
         }
 
-        // Set the initial selected language in the dropdown
         const userBrowserLang = navigator.language.split('-')[0];
         if (languageSelect.querySelector(`option[value="${userBrowserLang}"]`)) {
             languageSelect.value = userBrowserLang;
         } else {
-            languageSelect.value = 'en'; // Default to English if browser language not in list
+            languageSelect.value = 'en';
         }
 
-        // Add event listener for when the user changes the language
         languageSelect.addEventListener('change', (event) => {
-            applyTranslations(event.target.value); // Apply new translation
-            updateCalculations(); // Re-run calculations just in case any locale-specific formatting is affected (e.g., numbers)
+            applyTranslations(event.target.value);
+            updateCalculations();
         });
     }
 
-
     // ######################### Helper Functions #########################
+    const MAX_ALLOWED_RESOURCE = 99999999999; // Cap at 99 Billion
 
-    // Function to clean and format number input for display in text fields
+    /**
+     * Expands a decimal number like 6.8 to 6800 for 'resource' input fields.
+     * Modifies the inputElement.value directly.
+     */
+    function expandDecimal(inputElement) {
+        // Only apply to resource inputs (resource1-4, resourceWeekly, resourceHeldText, resourceNeededText)
+        if (!inputElement.id.startsWith('resource')) {
+            return;
+        }
+
+        let value = inputElement.value.replace(/,/g, ''); // Remove commas for parsing
+        const parsed = parseFloat(value);
+
+        // Check if it's a number, contains a decimal, and has a fractional part (e.g., 6.0 is not 6.000)
+        if (!isNaN(parsed) && value.includes('.') && parsed % 1 !== 0) {
+            inputElement.value = Math.round(parsed * 1000).toString();
+        }
+    }
+
+    /**
+     * Formats a number input with thousands separators and applies max value cap.
+     */
     function formatInput(inputElement) {
         let value = inputElement.value.replace(/[^0-9.]/g, ''); // Remove non-numeric except dot
         if (value === '') {
@@ -438,63 +662,63 @@
             return;
         }
 
-        // Format with thousands separator
-        if (value.includes('.')) {
-            inputElement.value = number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); // Adjust decimals as needed
-        } else {
+        // Apply max value cap
+        if (number > MAX_ALLOWED_RESOURCE) {
+            number = MAX_ALLOWED_RESOURCE;
+            // Update the actual input value if it was truncated
+            // We'll let toLocaleString format it for display
+            inputElement.value = number.toString();
+        }
+
+        // Determine if it should display decimals.
+        if (number % 1 === 0) { // It's a whole number
             inputElement.value = number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        } else { // It has a fractional part
+            inputElement.value = number.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); // Allow up to 2 decimals for display
         }
     }
 
     // Function to get a cleaned number from a textbox (removes commas)
+    // This function now assumes expandDecimal has already transformed the value if necessary,
+    // and formatInput has applied the MAX_ALLOWED_RESOURCE cap.
     function getCleanNumber(id) {
         const inputElement = document.getElementById(id);
         if (!inputElement) return 0;
         const value = inputElement.value.replace(/,/g, ''); // Remove commas for calculation
-        // If the value is empty, parseFloat will return NaN, which || 0 handles.
         return parseFloat(value) || 0;
     }
 
     // ######################### Time Zone Logic #########################
 
-    // Time zone IDs to include. Their full names (including DST) and offsets are generated dynamically.
     const curatedTimeZoneIds = [
-        "Etc/UTC", // Coordinated Universal Time
-        "America/St_Johns", // Newfoundland Time Zone
-        "America/Halifax",  // Atlantic Time Zone
-        "America/New_York", // Eastern Time Zone
-        "America/Indiana/Indianapolis", // Central Indiana, observes DST (New addition!)
-        "America/Chicago",  // Central Time Zone
-        "America/Denver",   // Mountain Time Zone (Observes DST, name changes between MST/MDT)
-        "America/Phoenix",  // Mountain Standard Time (Arizona - Does NOT observe DST)
-        "America/Los_Angeles", // Pacific Time Zone
-        "America/Anchorage",   // Alaska Time Zone
-        "America/Honolulu",    // Hawaii Time Zone (Problematic on some systems, now handled with static fallback)
-        "Asia/Tokyo"           // Japan Standard Time Zone
+        "Etc/UTC",
+        "America/St_Johns",
+        "America/Halifax",
+        "America/New_York",
+        "America/Indiana/Indianapolis",
+        "America/Chicago",
+        "America/Denver",
+        "America/Phoenix",
+        "America/Los_Angeles",
+        "America/Anchorage",
+        "America/Honolulu",
+        "Asia/Tokyo"
     ];
 
-    // Helper to get the current numerical UTC offset for a given time zone ID.
-    // This dynamically adjusts for DST based on the current date.
     function getNumericalOffsetInHours(tzId) {
         try {
             const now = new Date();
+            // Using 'en-US' locale to get a consistent offset string format.
             const offsetFormatter = new Intl.DateTimeFormat('en-US', {
                 timeZone: tzId,
-                timeZoneName: 'shortOffset', // e.g., "GMT-4", "GMT+10:30"
+                timeZoneName: 'shortOffset', // e.g., "GMT-04:00"
             });
-            const offsetString = offsetFormatter.format(now); // This might return "6/9/2025, GMT-4" or "GMT"
+            const offsetString = offsetFormatter.format(now);
 
-            // Special handling for Etc/UTC or others that might just return "GMT" or "UTC"
-            // If the string contains "GMT" or "UTC" but no explicit +/- offset, assume 0.
-            if ((offsetString.includes('GMT') || offsetString.includes('UTC')) && !offsetString.match(/[+-]\d/)) {
-                return 0; // It's likely UTC+0
-            }
-
-            // Robust Regex: Look for 'GMT' followed by optional space, then the actual offset.
-            // This is more flexible to handle leading date/time info which some browsers emit.
-            const match = offsetString.match(/GMT\s*([+-]\d{1,2}(:\d{2})?)/);
-            if (match && match[1]) {
-                const offsetPart = match[1];
+            // Directly parse the timezone offset from the full offset string (e.g., "GMT-04:00")
+            const utcMatch = offsetString.match(/(GMT|UTC)([+-]\d{1,2}(:\d{2})?)/);
+            if (utcMatch && utcMatch[2]) {
+                const offsetPart = utcMatch[2];
                 const sign = offsetPart.startsWith('-') ? -1 : 1;
                 const [hoursStr, minutesStr] = offsetPart.replace(/[+-]/, '').split(':');
                 let totalHours = parseInt(hoursStr, 10);
@@ -502,60 +726,62 @@
                     totalHours += parseInt(minutesStr, 10) / 60;
                 }
                 return sign * totalHours;
-            } else {
-                console.warn(`Could not parse numerical offset from: '${offsetString}' for '${tzId}'. No 'GMT+/-X' pattern found.`);
             }
+
+            // Fallback for time zones without a clear GMT/UTC offset string (like 'EST', 'PST' which format as just 'EST' or 'PST')
+            // Calculate offset based on current date's difference from UTC
+            // This is less robust but might be necessary for some browser/locale combinations.
+            const tzDate = new Date(now.toLocaleString('en-US', { timeZone: tzId }));
+            const utcDate = new Date(now.toUTCString());
+            const diffMs = tzDate.getTime() - utcDate.getTime();
+            return diffMs / (1000 * 60 * 60); // Convert milliseconds to hours
+
         } catch (e) {
             console.error(`Error calculating offset for '${tzId}':`, e);
         }
-        return 0; // Default to 0 if unable to parse or error occurs
+        return 0; // Default to UTC if any error
     }
 
     function populateTimezones() {
         const timezoneSelect = document.getElementById('timezoneSelect');
-        const now = new Date(); // Use a consistent date for all offset and name calculations (important for DST)
-        const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone; // Local time zone
+        const now = new Date();
+        const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        timezoneSelect.innerHTML = ''; // Clear existing options
+        timezoneSelect.innerHTML = '';
 
-        const tempOptions = []; // Array to build options before sorting and appending
+        const tempOptions = [];
 
-        // Iterate through curated IDs and add valid ones, or static fallbacks for unsupported ones
         curatedTimeZoneIds.forEach(tzId => {
             let offsetHours = 0;
             let longTimeZoneName = tzId;
-            let formattedOffset = `UTC+0`; // Default to UTC+0
+            let formattedOffset = `UTC+0`;
 
             try {
-                // EXPLICIT CHECK: Test if the browser supports the timezone ID at all.
-                // This catches 'RangeError: Invalid time zone specified' directly.
-                new Intl.DateTimeFormat('en-US', { timeZone: tzId }).format(now); 
+                // Validate if timeZone ID is supported by browser
+                new Intl.DateTimeFormat('en-US', { timeZone: tzId }).format(now);
 
-                // If no error, proceed with dynamic calculation for this tzId
                 offsetHours = getNumericalOffsetInHours(tzId);
-                
-                // --- Start of improved offset formatting ---
+
                 if (offsetHours === 0) {
                     formattedOffset = `UTC+0`;
                 } else {
-                    const offsetSign = offsetHours > 0 ? '+' : '-'; // Correctly determine sign
+                    const offsetSign = offsetHours > 0 ? '+' : '-';
                     const absOffsetHours = Math.abs(offsetHours);
                     const integerHours = Math.floor(absOffsetHours);
-                    const fractionalMinutes = (absOffsetHours % 1) * 60;
+                    const fractionalMinutes = Math.round((absOffsetHours % 1) * 60); // Round to avoid 59.9999
 
                     if (fractionalMinutes > 0) {
-                        formattedOffset = `UTC${offsetSign}${integerHours}:${String(fractionalMinutes).padStart(2, '0')}`;
+                        formattedOffset = `UTC${offsetSign}${integerHours.toString().padStart(2, '0')}:${fractionalMinutes.toString().padStart(2, '0')}`;
                     } else {
-                        formattedOffset = `UTC${offsetSign}${integerHours}`;
+                        formattedOffset = `UTC${offsetSign}${integerHours.toString().padStart(2, '0')}`;
                     }
                 }
-                // --- End of improved offset formatting ---
 
-                // Use formatToParts to reliably extract just the timeZoneName
+                // Get display name, preferring long name if available and not empty
                 const parts = new Intl.DateTimeFormat('en-US', {
                     timeZone: tzId,
-                    timeZoneName: 'long', // Request long time zone name
-                    year: 'numeric', month: 'numeric', day: 'numeric', // Add other parts to ensure 'timeZoneName' is present
+                    timeZoneName: 'long',
+                    year: 'numeric', month: 'numeric', day: 'numeric', // Required for timeZoneName to be reliable in some browsers
                     hour: 'numeric', minute: 'numeric', second: 'numeric'
                 }).formatToParts(now);
 
@@ -563,38 +789,29 @@
                 if (foundTimeZoneNamePart && typeof foundTimeZoneNamePart.value === 'string' && foundTimeZoneNamePart.value.trim() !== '') {
                     longTimeZoneName = foundTimeZoneNamePart.value;
                 } else {
-                    console.warn(`Could not extract long timeZoneName from parts for '${tzId}'. Falling back to ID.`);
-                    longTimeZoneName = tzId;
+                    // Fallback to specific names if browser name is generic or missing
+                    if (tzId === "America/Phoenix") {
+                        longTimeZoneName = "Arizona (Mountain)";
+                    } else if (tzId === "America/Indiana/Indianapolis") {
+                        longTimeZoneName = "Indiana (East)";
+                    } else if (tzId === "Etc/UTC") {
+                        longTimeZoneName = "Coordinated Universal Time";
+                    } else {
+                        longTimeZoneName = tzId.replace(/_/g, ' ').replace('America/', ''); // Clean up ID
+                    }
                 }
-
-                // --- Specific overrides for custom names ---
-                if (tzId === "America/Phoenix") {
-                    longTimeZoneName = "Arizona (Mountain)"; // Custom name for Phoenix
-                } else if (tzId === "America/Indiana/Indianapolis") {
-                    longTimeZoneName = "Indiana (East)"; // Custom name for Indiana
-                }
-
             } catch (e) {
-                // This catch block specifically handles the RangeError: Invalid time zone specified
-                // or any other error during dynamic calculation.
-                if (e instanceof RangeError && e.message.includes('Invalid time zone specified')) {
-                    // Changed to console.warn as we're providing a graceful fallback.
-                    console.warn(`Time zone '${tzId}' is explicitly unsupported by the browser (RangeError). Adding a static fallback entry.`, e.message);
-                } else {
-                    console.error(`Error during dynamic time zone data calculation for '${tzId}'. Adding a static fallback entry.`, e);
-                }
-                
-                // Add static entry for unsupported time zones
+                console.warn(`Time zone '${tzId}' unsupported by browser or error occurred. Using static fallback.`, e.message);
+                // Static fallbacks for explicitly unsupported or problematic IDs
                 if (tzId === "America/Honolulu") {
                     longTimeZoneName = "Hawaii";
-                    formattedOffset = "UTC-10:00"; // Manual static offset for Honolulu
+                    formattedOffset = "UTC-10:00";
                     offsetHours = -10;
-                } else if (tzId === "Etc/UTC") { 
+                } else if (tzId === "Etc/UTC") {
                     longTimeZoneName = "Coordinated Universal Time";
-                    formattedOffset = "UTC+0"; // Manual static offset for UTC
+                    formattedOffset = "UTC+0";
                     offsetHours = 0;
                 } else {
-                    // Generic static fallback for any other unsupported ID
                     longTimeZoneName = `${tzId} (Unsupported)`;
                     formattedOffset = `UTC+0`;
                     offsetHours = 0;
@@ -602,18 +819,17 @@
             }
 
             tempOptions.push({
-                id: tzId, // Use original ID even for static entries for consistent selection
+                id: tzId,
                 name: `${longTimeZoneName} (${formattedOffset})`,
                 offset: offsetHours
             });
         });
 
-        // Sort options: Primary sort by numerical offset, secondary sort by name (alphabetical for same offset)
         tempOptions.sort((a, b) => {
             if (a.offset !== b.offset) {
-                return a.offset - b.offset; // Sort from earliest (e.g., -10) to latest (e.g., +9)
+                return a.offset - b.offset;
             }
-            return a.name.localeCompare(b.name); // Alphabetical for same offset
+            return a.name.localeCompare(b.name);
         });
 
         tempOptions.forEach(tzData => {
@@ -623,17 +839,13 @@
             timezoneSelect.appendChild(option);
         });
 
-        // Attempt to select the user's local timezone's IANA ID
+        // Set default to local time zone, or closest match if not in curated list
         timezoneSelect.value = localTimeZone;
-
-        // Fallback: If the user's specific localTimeZone IANA ID is not found in our curated list,
-        // or if the selection fails, find the option with the closest offset.
         if (timezoneSelect.value !== localTimeZone && tempOptions.length > 0) {
             const localOffset = getNumericalOffsetInHours(localTimeZone);
             let bestMatchIndex = 0;
-            let minDiff = Infinity; // Initialize with a very large number
+            let minDiff = Infinity;
 
-            // Iterate through the sorted options to find the one with the closest offset
             for (let i = 0; i < tempOptions.length; i++) {
                 const diff = Math.abs(tempOptions[i].offset - localOffset);
                 if (diff < minDiff) {
@@ -641,85 +853,119 @@
                     bestMatchIndex = i;
                 }
             }
-            timezoneSelect.selectedIndex = bestMatchIndex; // Select the closest match
-            console.warn(`Local timezone '${localTimeZone}' not directly in curated list or unsupported. Defaulting to closest offset: '${tempOptions[bestMatchIndex].name}'.`);
+            timezoneSelect.selectedIndex = bestMatchIndex;
+            console.log(`Local timezone '${localTimeZone}' not directly in curated list. Defaulting to closest offset: '${tempOptions[bestMatchIndex].name}'.`);
         }
     }
 
 
     // ######################### Main Calculation Logic #########################
-    function updateCalculations() {
-        let totalQuartzFromWorkshops = 0;
-        let totalWorkshopRate = 0;
+    /**
+     * Performs calculations and handles auto-population of resource held values.
+     * @param {HTMLElement} [triggeringElement=null] - The input element that triggered the update (e.g., onblur).
+     */
+    function updateCalculations(triggeringElement = null) {
+        let totalResourcesFromBuildings = 0;
+        let totalBuildingRate = 0;
 
-        const workshopLevels = [
+        const buildingLevels = [
             document.getElementById('level1'),
             document.getElementById('level2'),
             document.getElementById('level3'),
             document.getElementById('level4'),
             document.getElementById('levelWeekly')
         ];
-        const quartzWorkshops = [
-            document.getElementById('quartz1'),
-            document.getElementById('quartz2'),
-            document.getElementById('quartz3'),
-            document.getElementById('quartz4'),
-            document.getElementById('quartzWeekly')
+        const resourceBuildings = [
+            document.getElementById('resource1'),
+            document.getElementById('resource2'),
+            document.getElementById('resource3'),
+            document.getElementById('resource4'),
+            document.getElementById('resourceWeekly')
         ];
 
-        for (let i = 0; i < 5; i++) {
-            let level = getCleanNumber(workshopLevels[i].id); // Use getCleanNumber
-            if (level <= 30) {
-                totalWorkshopRate += level;
+        // --- Auto-population Logic ---
+        // Only trigger auto-population if a 'resource' input was the triggering element
+        if (triggeringElement && triggeringElement.id.startsWith('resource')) {
+            const triggeredLevelId = 'level' + triggeringElement.id.replace('resource', '');
+            const triggeredLevelElement = document.getElementById(triggeredLevelId);
+            const triggeredLevel = getCleanNumber(triggeredLevelId);
+            const triggeredResourceValue = getCleanNumber(triggeringElement.id);
+
+            // Only auto-populate if source level is valid (greater than 0) and resource value is also valid
+            if (triggeredLevel > 0 && triggeredResourceValue > 0) {
+                for (let i = 0; i < resourceBuildings.length; i++) {
+                    const currentResourceElement = resourceBuildings[i];
+                    const currentLevelElement = buildingLevels[i];
+
+                    // Don't auto-populate the element that just triggered the update
+                    if (currentResourceElement.id === triggeringElement.id) {
+                        continue;
+                    }
+
+                    const currentLevel = getCleanNumber(currentLevelElement.id);
+                    const currentResourceValue = getCleanNumber(currentResourceElement.id);
+
+                    // Auto-populate if levels match AND (target field is empty OR target field has the same value as source)
+                    // The "same value as source" check allows subsequent auto-fills to overwrite
+                    // previous auto-fills, but not manually changed values.
+                    if (currentLevel > 0 && currentLevel === triggeredLevel &&
+                        (currentResourceValue === 0 || currentResourceValue === triggeredResourceValue)) {
+
+                        currentResourceElement.value = triggeredResourceValue.toString(); // Set the raw value
+                        formatInput(currentResourceElement); // Immediately format the auto-populated field
+                    }
+                }
             }
-            let quartz = getCleanNumber(quartzWorkshops[i].id); // Use getCleanNumber
-            totalQuartzFromWorkshops += quartz;
+        }
+        // --- End Auto-population Logic ---
+
+        // --- Standard Calculations ---
+        for (let i = 0; i < 5; i++) {
+            let level = getCleanNumber(buildingLevels[i].id);
+            if (level <= 30) { // Only levels up to 30 contribute to rate
+                totalBuildingRate += level;
+            }
+            let resource = getCleanNumber(resourceBuildings[i].id);
+            totalResourcesFromBuildings += resource;
         }
 
-        const quartzHeld = getCleanNumber('quartzHeldText');
-        const quartzNeeded = getCleanNumber('quartzNeededText');
+        const resourceHeld = getCleanNumber('resourceHeldText');
+        const resourceNeeded = getCleanNumber('resourceNeededText');
 
-        const quartzPerHour = totalWorkshopRate * 720;
-        document.getElementById('quartzHrDisplay').textContent = quartzPerHour.toLocaleString('en-US');
+        const resourcePerHour = totalBuildingRate * 720;
+        document.getElementById('resourceHrDisplay').textContent = resourcePerHour.toLocaleString('en-US');
 
-        const totalCurrentQuartz = quartzHeld + totalQuartzFromWorkshops;
-        document.getElementById('totalQuartzDisplay').textContent = totalCurrentQuartz.toLocaleString('en-US');
+        const totalCurrentResource = resourceHeld + totalResourcesFromBuildings;
+        document.getElementById('totalResourceDisplay').textContent = totalCurrentResource.toLocaleString('en-US');
 
         const timeDisplay = document.getElementById('timeDisplay');
         const completionTimeDisplay = document.getElementById('completionTimeDisplay');
 
-        // Condition for displaying completion time: must have a quartz rate and still need quartz
-        if (quartzPerHour > 0 && totalCurrentQuartz < quartzNeeded) {
-            const hoursRequired = (quartzNeeded - totalCurrentQuartz) / quartzPerHour;
+        if (resourcePerHour > 0 && totalCurrentResource < resourceNeeded) {
+            const hoursRequired = (resourceNeeded - totalCurrentResource) / resourcePerHour;
             timeDisplay.textContent = `${hoursRequired.toFixed(2)} hrs`;
 
             const completionDateTimeUtc = new Date(Date.now() + hoursRequired * 60 * 60 * 1000);
-            
+
             const selectedTimeZone = document.getElementById('timezoneSelect').value;
 
-            // IMPORTANT: Check if a time zone is actually selected before formatting
             if (!selectedTimeZone) {
                 console.error("No time zone selected in dropdown. Cannot display completion time.");
                 completionTimeDisplay.textContent = "N/A (Select TZ)";
-                return; // Exit function if no TZ is selected to prevent errors
+                return;
             }
-            
-            // Format the completion time using Intl.DateTimeFormat
-            // Note: If selectedTimeZone is a 'static' one because the browser didn't support it,
-            // this formatter might still throw if used with the unsupported ID.
-            // The value in the dropdown is still the IANA ID.
-            try { // Added try-catch around formatting completion time, just in case
+
+            try {
                 const formatter = new Intl.DateTimeFormat('en-US', {
                     hour: 'numeric',
                     minute: 'numeric',
-                    hour12: true, // Use AM/PM
+                    hour12: true,
                     timeZone: selectedTimeZone,
-                    timeZoneName: 'short' // Displays abbreviations like EDT, JST
+                    timeZoneName: 'short'
                 });
                 completionTimeDisplay.textContent = formatter.format(completionDateTimeUtc);
             } catch (e) {
                 console.error(`Error formatting completion time for '${selectedTimeZone}'. Displaying UTC.`, e);
-                // Fallback to UTC if selected timezone formatter fails for completion time display
                 const utcFormatter = new Intl.DateTimeFormat('en-US', {
                     hour: 'numeric',
                     minute: 'numeric',
@@ -734,21 +980,25 @@
             timeDisplay.textContent = "N/A";
             completionTimeDisplay.textContent = "N/A";
         }
+        // --- End Standard Calculations ---
 
-        // Re-format all input fields after calculations to ensure they show commas
-        // Only format if the value is not empty, otherwise leave it empty
-        workshopLevels.forEach(input => { if (input.value !== '') formatInput(input); });
-        quartzWorkshops.forEach(input => { if (input.value !== '') formatInput(input); });
-        if (document.getElementById('quartzHeldText').value !== '') formatInput(document.getElementById('quartzHeldText'));
-        if (document.getElementById('quartzNeededText').value !== '') formatInput(document.getElementById('quartzNeededText'));
+        // Re-format the main resourceHeldText and resourceNeededText after calculations,
+        // as they are not part of the auto-population loop for buildings.
+        // Building resource fields are formatted within the auto-population loop or by their own onblur handler.
+        if (document.getElementById('resourceHeldText').value !== '') formatInput(document.getElementById('resourceHeldText'));
+        if (document.getElementById('resourceNeededText').value !== '') formatInput(document.getElementById('resourceNeededText'));
+        // Re-format level fields if the triggering element was a level input
+        if (triggeringElement && triggeringElement.id.startsWith('level') && triggeringElement.value !== '') {
+            formatInput(triggeringElement);
+        }
     }
 
     // ######################### Initial Load #########################
     window.onload = () => {
-        populateLanguageSelector(); // Populate language dropdown
-        populateTimezones();        // Populate timezones
-        applyTranslations();        // Apply initial translations (based on browser or default)
-        updateCalculations();       // Perform initial calculations
+        populateLanguageSelector();
+        populateTimezones();
+        applyTranslations(); // Initial translation application, including for title
+        updateCalculations(); // Initial calculation and display update
     };
 </script>
 
